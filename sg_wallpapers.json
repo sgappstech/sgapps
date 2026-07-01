@@ -19,5 +19,12 @@
       "previewUrl": "https://raw.githubusercontent.com/sgappstech/sgapps/main/images/vijay3.png",
       "categories": "TVK",
       "premium": false
+   },
+   {
+      "name": "TVK",
+      "url": "https://raw.githubusercontent.com/sgappstech/sgapps/main/images/vijay4.jpeg",
+      "previewUrl": "https://raw.githubusercontent.com/sgappstech/sgapps/main/images/vijay4.jpeg",
+      "categories": "TVK",
+      "premium": false
    }
 ]
