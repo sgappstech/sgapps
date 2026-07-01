@@ -64,6 +64,13 @@
    },
    {
       "name": "TVK",
+      "url": "https://raw.githubusercontent.com/sgappstech/sgapps/main/images/vijay10.jpg",
+      "previewUrl": "https://raw.githubusercontent.com/sgappstech/sgapps/main/images/vijay10.jpg",
+      "categories": "TVK",
+      "premium": false
+   },
+   {
+      "name": "TVK",
       "url": "https://raw.githubusercontent.com/sgappstech/sgapps/main/images/vijay11.jpg",
       "previewUrl": "https://raw.githubusercontent.com/sgappstech/sgapps/main/images/vijay11.jpg",
       "categories": "TVK",
