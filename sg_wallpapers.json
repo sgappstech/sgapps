@@ -1,6 +1,13 @@
 [
    {
       "name": "TVK",
+      "url": "https://raw.githubusercontent.com/sgappstech/sgapps/main/images/vijay13.jpg",
+      "previewUrl": "https://raw.githubusercontent.com/sgappstech/sgapps/main/images/vijay13.jpg",
+      "categories": "TVK",
+      "premium": false
+   },
+   {
+      "name": "TVK",
       "url": "https://raw.githubusercontent.com/sgappstech/sgapps/main/images/vijay1.png",
       "previewUrl": "https://raw.githubusercontent.com/sgappstech/sgapps/main/images/vijay1.png",
       "categories": "TVK",
