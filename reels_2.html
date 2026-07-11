@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>feed / reels</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg: #08090b;
+    --panel: #101215;
+    --line: rgba(255,255,255,0.10);
+    --line-strong: rgba(255,255,255,0.20);
+    --ink: #EDEFF2;
+    --ink-dim: #8B93A1;
+    --signal: #5EEAD4;
+    --signal-dim: #2E7C71;
+    --alert: #FF5A5A;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0; padding:0; height:100%; background:var(--bg);
+    font-family:'Inter',sans-serif; color:var(--ink);
+    overscroll-behavior:none;
+  }
+
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+
+  .app{
+    position:relative;
+    width:100%;
+    max-width:460px;
+    height:100vh;
+    height:100dvh;
+    margin:0 auto;
+    background:#000;
+    overflow:hidden;
+    box-shadow: 0 0 0 1px var(--line);
+  }
+
+  @media (min-width: 461px){
+    body{ display:flex; align-items:center; justify-content:center; background:#000; }
+    .app{ height:92vh; max-height:900px; border-radius:18px; overflow:hidden; }
+  }
+
+  .feed{
+    height:100%;
+    overflow-y:scroll;
+    scroll-snap-type:y mandatory;
+    scrollbar-width:none;
+  }
+  .feed::-webkit-scrollbar{ display:none; }
+
+  .slide{
+    position:relative;
+    height:100%;
+    width:100%;
+    scroll-snap-align:start;
+    scroll-snap-stop:always;
+    overflow:hidden;
+    background:#000;
+  }
+
+  .slide video{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:cover;
+    background:#000;
+  }
+
+  .vignette{
+    position:absolute; inset:0;
+    background:linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.35) 65%, rgba(0,0,0,0.55) 100%);
+    pointer-events:none;
+  }
+
+  /* HUD frame */
+  .progress-row{
+    position:absolute; top:8px; left:8px; right:8px;
+    display:flex; gap:4px;
+    pointer-events:none;
+  }
+  .progress-track{
+    flex:1; height:2px; background:rgba(255,255,255,0.25); border-radius:2px; overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; width:0%; background:var(--ink);
+  }
+
+  .info{
+    position:absolute; left:16px; right:76px; bottom:22px;
+    pointer-events:none;
+  }
+
+  .tag{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--signal);
+    border:1px solid rgba(94,234,212,0.45);
+    background:rgba(94,234,212,0.08);
+    padding:3px 8px;
+    margin-bottom:10px;
+  }
+  .tag::before{
+    content:''; width:5px; height:5px; background:var(--signal);
+  }
+
+  .title{
+    font-size:16px; font-weight:600; margin:0 0 6px 0;
+    line-height:1.3;
+  }
+  .desc{
+    font-size:12.5px; color:var(--ink-dim); margin:0;
+    line-height:1.5;
+  }
+
+  .source{
+    margin-top:10px; font-size:10.5px; color:var(--ink-dim);
+    display:flex; align-items:center; gap:5px;
+  }
+  .source a{ color:var(--ink-dim); text-decoration:none; border-bottom:1px dotted var(--line-strong); pointer-events:auto; }
+  .source a:hover{ color:var(--ink); }
+
+  .rail{
+    position:absolute; right:12px; bottom:24px;
+    display:flex; flex-direction:column; align-items:center; gap:18px;
+  }
+  .rail button{
+    all:unset;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    cursor:pointer;
+    color:var(--ink);
+  }
+  .rail-btn{
+    width:42px; height:42px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(20,22,25,0.55);
+    border:1px solid var(--line);
+    transition:transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+  }
+  .rail button:active .rail-btn{ transform:scale(0.88); }
+  .rail-btn svg{ width:20px; height:20px; }
+  .rail-count{ font-size:10.5px; color:var(--ink-dim); }
+
+  .rail button.liked .rail-btn{
+    border-color:var(--alert);
+    background:rgba(255,90,90,0.12);
+  }
+  .rail button.liked svg{ fill:var(--alert); stroke:var(--alert); }
+  .rail button.liked .rail-count{ color:var(--alert); }
+
+  .rail-btn{ transition:transform 0.12s ease, border-color 0.12s ease, background 0.12s ease; }
+  .rail button.like-btn.pulse .rail-btn{ animation:likepop 0.42s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes likepop{
+    0%{ transform:scale(1); }
+    35%{ transform:scale(1.22); }
+    65%{ transform:scale(0.94); }
+    100%{ transform:scale(1); }
+  }
+
+  .rail button.busy .rail-btn{ border-color:var(--signal); }
+  .mini-spin{
+    width:16px; height:16px; border-radius:50%;
+    border:2px solid rgba(255,255,255,0.25);
+    border-top-color:var(--signal);
+    animation:spin 0.7s linear infinite;
+    display:inline-block;
+  }
+
+  .center-tap{
+    position:absolute; inset:0;
+    z-index:2;
+  }
+
+  .center-icon{
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%) scale(0.7);
+    width:64px; height:64px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:50%;
+    background:rgba(0,0,0,0.4);
+    border:1px solid var(--line-strong);
+    opacity:0;
+    pointer-events:none;
+  }
+  .center-icon.show{
+    animation:pop 0.55s ease forwards;
+  }
+  @keyframes pop{
+    0%{ opacity:0; transform:translate(-50%,-50%) scale(0.6); }
+    30%{ opacity:1; transform:translate(-50%,-50%) scale(1.05); }
+    100%{ opacity:0; transform:translate(-50%,-50%) scale(1.15); }
+  }
+
+  .heart-burst{
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%) scale(0);
+    pointer-events:none;
+    opacity:0;
+  }
+  .heart-burst.show{
+    animation:heart 0.7s cubic-bezier(.2,1.4,.4,1) forwards;
+  }
+  @keyframes heart{
+    0%{ opacity:0; transform:translate(-50%,-50%) scale(0.2); }
+    35%{ opacity:1; transform:translate(-50%,-50%) scale(1.15); }
+    100%{ opacity:0; transform:translate(-50%,-50%) scale(1.3); }
+  }
+
+  .boot{
+    position:absolute; inset:0; z-index:5;
+    background:var(--bg);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:10px;
+    transition:opacity 0.4s ease;
+  }
+  .boot .mark{
+    font-size:13px; letter-spacing:0.25em; color:var(--signal);
+  }
+  .boot .bar{
+    width:120px; height:2px; background:rgba(255,255,255,0.12); overflow:hidden;
+  }
+  .boot .bar-fill{
+    width:30%; height:100%; background:var(--signal);
+    animation:load 1s infinite ease-in-out;
+  }
+  @keyframes load{
+    0%{ transform:translateX(-100%); }
+    100%{ transform:translateX(400%); }
+  }
+  .boot.hide{ opacity:0; pointer-events:none; }
+
+  .hint{
+    position:absolute; bottom:24px; left:50%; transform:translateX(-50%);
+    font-size:10px; letter-spacing:0.12em; color:var(--ink-dim);
+    text-transform:uppercase;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+  }
+  .hint svg{ width:14px; height:14px; animation:bob 1.6s infinite; }
+  @keyframes bob{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(5px);} }
+
+  .loader{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--bg);
+    z-index:1;
+    opacity:1;
+    transition:opacity 0.35s ease;
+  }
+  .loader.hidden{ opacity:0; pointer-events:none; }
+  .loader .ring{
+    width:26px; height:26px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,0.15);
+    border-top-color:var(--signal);
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="boot" id="boot">
+    <div class="mono mark">VISION // FEED</div>
+    <div class="bar"><div class="bar-fill"></div></div>
+    <div class="mono" style="font-size:10px; color:var(--ink-dim);">loading clips from github.com</div>
+  </div>
+
+  <div class="feed" id="feed"></div>
+</div>
+
+<script>
+/* ---------------------------------------------------------------
+   Video source: publicly hosted, CC-BY-4.0 licensed sample clips
+   from the intel-iot-devkit/sample-videos GitHub repository,
+   served via raw.githubusercontent.com.
+   Repo: https://github.com/intel-iot-devkit/sample-videos
+
+   To use your own footage: replace RAW_BASE and REELS below with
+   links to files in your own repo, e.g.
+   "https://raw.githubusercontent.com/<user>/<repo>/<branch>/<file>.mp4"
+------------------------------------------------------------------ */
+
+const RAW_BASE = "https://raw.githubusercontent.com/sgappstech/sgapps/main/";
+
+const REELS = [
+  { file: "vijay1.mp4", tag: "street / mixed traffic",
+    title: "Person, bicycle & car detection",
+    desc: "Multi-class object tracking on a live street feed." },
+  { file: "face-demographics-walking.mp4", tag: "sidewalk / pedestrian",
+    title: "Face demographics, walking",
+    desc: "Continuous face tracking across a moving crowd." },
+  { file: "car-detection.mp4", tag: "roadway / vehicles",
+    title: "Car detection",
+    desc: "Vehicle bounding-box detection on open road." },
+  { file: "bottle-detection.mp4", tag: "conveyor / retail",
+    title: "Bottle detection",
+    desc: "Object detection on a production line belt." },
+  { file: "fruit-and-vegetable-detection.mp4", tag: "produce / retail",
+    title: "Fruit & vegetable detection",
+    desc: "Classifying produce items in real time." },
+  { file: "worker-zone-detection.mp4", tag: "site / safety",
+    title: "Worker zone detection",
+    desc: "Monitoring restricted-zone entry on a work site." },
+  { file: "one-by-one-person-detection.mp4", tag: "entryway / access",
+    title: "One-by-one person detection",
+    desc: "Sequential person counting through a gateway." },
+  { file: "store-aisle-detection.mp4", tag: "aisle / retail",
+    title: "Store aisle detection",
+    desc: "Foot-traffic tracking down a retail aisle." },
+];
+
+const feedEl = document.getElementById("feed");
+const bootEl = document.getElementById("boot");
+
+const icons = {
+  heart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7.5-4.6-10-9.2C.5 8.2 2.3 4.5 6 4c2.1-.3 3.9.8 6 3.2C14.1 4.8 15.9 3.7 18 4c3.7.5 5.5 4.2 4 7.8C19.5 16.4 12 21 12 21z"/></svg>`,
+  share: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-3.8M8.6 13.4l6.8 3.8"/></svg>`,
+  download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11"/><path d="M7.5 11.5L12 16l4.5-4.5"/><path d="M5 19h14"/></svg>`,
+  check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12.5l4.5 4.5L19 7"/></svg>`,
+  play: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`,
+  pause: `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>`,
+};
+
+let userUnmuted = false;
+
+function fmtCount(n){
+  if(n >= 1000) return (n/1000).toFixed(1).replace(/\.0$/,"") + "k";
+  return String(n);
+}
+
+REELS.forEach((r, i) => {
+  const slide = document.createElement("div");
+  slide.className = "slide";
+  slide.dataset.index = i;
+
+  const baseLikes = 400 + Math.floor(((i+1) * 137) % 900);
+
+  slide.innerHTML = `
+    <video src="${RAW_BASE}${r.file}" loop muted playsinline preload="auto"></video>
+    <div class="loader" data-role="loader"><div class="ring"></div></div>
+    <div class="vignette"></div>
+    <div class="progress-row">${REELS.map((_,j)=>`<div class="progress-track"><div class="progress-fill" data-p="${j}"></div></div>`).join("")}</div>
+
+    <div class="center-tap">
+      <div class="center-icon" data-role="playicon"></div>
+      <div class="heart-burst" data-role="heartburst">
+        <svg width="90" height="90" viewBox="0 0 24 24" fill="#FF5A5A"><path d="M12 21s-7.5-4.6-10-9.2C.5 8.2 2.3 4.5 6 4c2.1-.3 3.9.8 6 3.2C14.1 4.8 15.9 3.7 18 4c3.7.5 5.5 4.2 4 7.8C19.5 16.4 12 21 12 21z"/></svg>
+      </div>
+    </div>
+
+    <div class="info">
+      <div class="tag mono">${r.tag}</div>
+      <p class="title">${r.title}</p>
+      <p class="desc">${r.desc}</p>
+      <div class="source mono">
+        <span>src:</span>
+        <a href="https://github.com/intel-iot-devkit/sample-videos" target="_blank" rel="noopener">intel-iot-devkit/sample-videos</a>
+      </div>
+    </div>
+
+    <div class="rail">
+      <button class="like-btn" aria-label="Like">
+        <span class="rail-btn">${icons.heart}</span>
+        <span class="rail-count mono" data-role="likecount">${fmtCount(baseLikes)}</span>
+      </button>
+      <button class="download-btn" aria-label="Download">
+        <span class="rail-btn">${icons.download}</span>
+        <span class="rail-count mono">save</span>
+      </button>
+      <button class="share-btn" aria-label="Share">
+        <span class="rail-btn">${icons.share}</span>
+        <span class="rail-count mono">share</span>
+      </button>
+    </div>
+    ${i === 0 ? `<div class="hint mono">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+        tap for sound &middot; swipe for next
+      </div>` : ""}
+  `;
+
+  feedEl.appendChild(slide);
+
+  const video = slide.querySelector("video");
+  const likeBtn = slide.querySelector(".like-btn");
+  const likeCountEl = slide.querySelector('[data-role="likecount"]');
+  const downloadBtn = slide.querySelector(".download-btn");
+  const shareBtn = slide.querySelector(".share-btn");
+  const playIcon = slide.querySelector('[data-role="playicon"]');
+  const heartBurst = slide.querySelector('[data-role="heartburst"]');
+  const centerTap = slide.querySelector(".center-tap");
+  const progFill = slide.querySelector('.progress-fill[data-p="'+i+'"]');
+  const hint = slide.querySelector(".hint");
+  const loader = slide.querySelector('[data-role="loader"]');
+
+  let liked = false;
+  let likeCount = baseLikes;
+  let lastTap = 0;
+
+  function hideLoader(){ loader.classList.add("hidden"); }
+  if(video.readyState >= 3){ hideLoader(); }
+  video.addEventListener("canplay", hideLoader);
+  video.addEventListener("playing", hideLoader);
+  video.addEventListener("waiting", () => loader.classList.remove("hidden"));
+
+  video.addEventListener("timeupdate", () => {
+    if(video.duration){
+      progFill.style.width = (video.currentTime / video.duration * 100) + "%";
+    }
+  });
+
+  function setLiked(state){
+    liked = state;
+    likeBtn.classList.toggle("liked", liked);
+    likeCount = baseLikes + (liked ? 1 : 0);
+    likeCountEl.textContent = fmtCount(likeCount);
+    if(liked){
+      likeBtn.classList.remove("pulse");
+      void likeBtn.offsetWidth;
+      likeBtn.classList.add("pulse");
+    }
+  }
+
+  likeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    setLiked(!liked);
+  });
+
+  downloadBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    if(downloadBtn.classList.contains("busy")) return;
+    const iconEl = downloadBtn.querySelector(".rail-btn");
+    const labelEl = downloadBtn.querySelector(".rail-count");
+    const originalIcon = iconEl.innerHTML;
+    const originalLabel = labelEl.textContent;
+    downloadBtn.classList.add("busy");
+    iconEl.innerHTML = '<span class="mini-spin"></span>';
+    labelEl.textContent = "saving";
+    try{
+      const res = await fetch(video.src);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = r.file;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      iconEl.innerHTML = icons.check;
+      labelEl.textContent = "saved";
+    } catch(err){
+      window.open(video.src, "_blank");
+      labelEl.textContent = originalLabel;
+    } finally {
+      setTimeout(() => {
+        downloadBtn.classList.remove("busy");
+        iconEl.innerHTML = originalIcon;
+        labelEl.textContent = originalLabel;
+      }, 1400);
+    }
+  });
+
+  shareBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    const labelEl = shareBtn.querySelector(".rail-count");
+    const originalLabel = labelEl.textContent;
+    const shareData = { title: r.title, text: r.desc, url: video.src };
+    if(navigator.share){
+      try{ await navigator.share(shareData); } catch(err){}
+      return;
+    }
+    if(navigator.clipboard){
+      try{
+        await navigator.clipboard.writeText(video.src);
+        labelEl.textContent = "copied";
+        setTimeout(() => { labelEl.textContent = originalLabel; }, 1400);
+      } catch(err){}
+    }
+  });
+
+  function flashPlayState(){
+    playIcon.innerHTML = video.paused ? icons.play : icons.pause;
+    playIcon.classList.remove("show");
+    void playIcon.offsetWidth;
+    playIcon.classList.add("show");
+  }
+
+  centerTap.addEventListener("click", () => {
+    const now = Date.now();
+    if(now - lastTap < 320){
+      if(!liked) setLiked(true);
+      heartBurst.classList.remove("show");
+      void heartBurst.offsetWidth;
+      heartBurst.classList.add("show");
+    } else {
+      if(video.paused){ video.play(); } else { video.pause(); }
+      flashPlayState();
+    }
+    lastTap = now;
+    if(hint) hint.style.display = "none";
+  });
+});
+
+/* Autoplay the slide in view, pause the rest.
+   rootMargin extends the trigger zone a full screen above/below so the
+   upcoming clip is already buffering before it snaps into place. */
+const videos = Array.from(document.querySelectorAll("video"));
+
+const preloadObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    const v = entry.target;
+    if(entry.isIntersecting && v.preload !== "auto"){
+      v.preload = "auto";
+      v.load();
+    }
+  });
+}, { root: document.getElementById("feed"), rootMargin: "100% 0px", threshold: 0 });
+
+const playObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    const v = entry.target;
+    if(entry.isIntersecting && entry.intersectionRatio > 0.6){
+      v.muted = !userUnmuted;
+      const tryPlay = () => v.play().catch(()=>{});
+      if(v.readyState >= 2){ tryPlay(); }
+      else { v.addEventListener("canplay", tryPlay, { once:true }); }
+    } else {
+      v.pause();
+    }
+  });
+}, { root: document.getElementById("feed"), threshold: [0, 0.6, 1] });
+
+videos.forEach(v => {
+  preloadObserver.observe(v);
+  playObserver.observe(v);
+});
+
+document.querySelector(".app").addEventListener("click", () => {
+  if(userUnmuted) return;
+  userUnmuted = true;
+  videos.forEach(v => { v.muted = false; });
+}, { capture:true, once:true });
+
+/* Boot screen: wait for first video to be ready enough to play */
+const firstVideo = videos[0];
+function dismissBoot(){
+  bootEl.classList.add("hide");
+  firstVideo.muted = true;
+  firstVideo.play().catch(()=>{});
+}
+if(firstVideo.readyState >= 2){
+  setTimeout(dismissBoot, 400);
+} else {
+  firstVideo.addEventListener("canplay", dismissBoot, { once:true });
+  setTimeout(dismissBoot, 3500);
+}
+
+/* Keyboard nav for desktop */
+document.addEventListener("keydown", (e) => {
+  const feed = document.getElementById("feed");
+  if(e.key === "ArrowDown"){ feed.scrollBy({ top: feed.clientHeight, behavior:"smooth" }); }
+  if(e.key === "ArrowUp"){ feed.scrollBy({ top: -feed.clientHeight, behavior:"smooth" }); }
+});
+</script>
+
+</body>
+</html>
