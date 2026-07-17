@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gallery — SG Apps Github Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+@font-face {
+  font-family: "Google Sans Flex";
+  src: url("./GoogleSansFlex-VariableFont_GRAD_ROND_opsz_slnt_wdth_wght.ttf") format("truetype-variations"),
+       url("./GoogleSansFlex-VariableFont_GRAD_ROND_opsz_slnt_wdth_wght.ttf") format("truetype");
+  font-weight: 100 1000;
+  font-stretch: 25% 151%;
+  font-style: normal;
+  font-display: swap;
+}
+/* ---------- design tokens — glass / gradient-mesh, top navbar ---------- */
+:root {
+  --text: #1a1a2e;
+  --text-dim: #5b5b78;
+  --text-faint: #9695ad;
+
+  --surface: rgba(255,255,255,0.62);
+  --surface-raised: rgba(255,255,255,0.82);
+  --glass-strong: rgba(255,255,255,0.86);
+  --border: rgba(26,26,46,0.14);
+  --border-soft: rgba(26,26,46,0.08);
+
+  --green: #1fae63;
+  --green-dim: #158a4d;
+  --green-bg: rgba(31,174,99,0.15);
+  --blue: #2fb8c4;
+  --blue-bg: rgba(47,184,196,0.15);
+  --purple: #5b57f0;
+  --purple-bg: rgba(91,87,240,0.14);
+  --pink: #ff5da2;
+  --amber: #ffab1a;
+  --amber-bg: rgba(255,171,26,0.17);
+  --red: #ff4d5e;
+  --red-bg: rgba(255,77,94,0.14);
+
+  --mono: "Fira Code", ui-monospace, "SF Mono", Consolas, monospace;
+  --sans: "Google Sans Flex", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --display: "Google Sans Flex", var(--sans);
+
+  --bg: #f2f0fb;
+}
+
+* { box-sizing: border-box; }
+
+::selection { background: var(--purple-bg); color: var(--purple); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(26,26,46,0.18); border-radius: 20px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(26,26,46,0.32); background-clip: padding-box; }
+
+html, body {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--sans);
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background:
+    radial-gradient(760px 620px at 4% 0%, rgba(91,87,240,0.30), transparent 60%),
+    radial-gradient(760px 620px at 100% 6%, rgba(255,93,162,0.26), transparent 58%),
+    radial-gradient(820px 680px at 46% 100%, rgba(255,171,26,0.20), transparent 60%),
+    radial-gradient(600px 500px at 90% 90%, rgba(47,184,196,0.18), transparent 55%),
+    linear-gradient(165deg, #eef0fd 0%, #fbf1f6 55%, #fff8ec 100%);
+  background-attachment: fixed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* ---------- top navbar ---------- */
+.sidebar {
+  width: 100%;
+  flex-shrink: 0;
+  background: var(--glass-strong);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border-right: none;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 12px 28px;
+  gap: 6px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: 0 8px 30px rgba(26,26,46,0.06);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px 0 0;
+  margin: 0 18px 0 0;
+  border-bottom: none;
+  border-right: 1px solid var(--border-soft);
+}
+
+.brand .dot {
+  width: 26px; height: 26px; border-radius: 9px;
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  flex-shrink: 0;
+  position: relative;
+  box-shadow: 0 4px 14px rgba(91,87,240,0.45);
+}
+.brand .dot::after {
+  content: "❯";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.brand-text {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 2px;
+  padding: 9px 16px;
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-family: var(--sans);
+  font-weight: 600;
+  border-radius: 999px;
+  white-space: nowrap;
+  transition: background 0.16s, color 0.16s;
+}
+
+.nav-item svg { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.75; }
+
+.nav-item:hover {
+  background: rgba(26,26,46,0.06);
+  color: var(--text);
+}
+
+.nav-item.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--purple), #8a7bff);
+  font-weight: 650;
+  box-shadow: 0 4px 14px rgba(91,87,240,0.35);
+}
+.nav-item.active svg { opacity: 1; }
+
+.sidebar-footer {
+  margin-top: 0;
+  margin-left: auto;
+  padding: 0;
+  border-top: none;
+}
+
+.repo-chip {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  line-height: 1.5;
+  text-align: right;
+}
+
+.repo-chip b { color: var(--text-dim); font-weight: 500; }
+
+/* ---------- main area ---------- */
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 40px 48px 64px;
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.page-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pink);
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.page-title {
+  font-family: var(--display);
+  font-size: 30px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.page-sub {
+  color: var(--text-dim);
+  font-size: 13.5px;
+  margin: 0 0 28px;
+  line-height: 1.6;
+  max-width: 640px;
+}
+.page-sub b { color: var(--text); font-weight: 600; }
+
+/* ---------- status bar (git-style commit strip) ---------- */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 18px;
+  margin-bottom: 28px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  flex-wrap: wrap;
+}
+
+.status-bar .seg { display: flex; align-items: center; gap: 6px; }
+.status-bar .seg svg { width: 13px; height: 13px; opacity: 0.85; color: var(--purple); }
+.status-bar b { color: var(--text); font-weight: 600; }
+.status-bar .sep { color: var(--text-faint); }
+
+/* ---------- manifest reminder ---------- */
+.reminder-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--amber-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 18px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.reminder-bar svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--amber); }
+.reminder-bar a { color: var(--purple); font-weight: 600; text-decoration: none; }
+.reminder-bar a:hover { text-decoration: underline; }
+
+/* ---------- two-column layout: upload | manifest ---------- */
+.upload-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.col-panel {
+  background: var(--surface);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 26px;
+  box-shadow: 0 10px 34px rgba(26,26,46,0.06);
+}
+
+.col-heading {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--purple);
+  margin: 0 0 18px;
+  font-weight: 700;
+}
+
+@media (max-width: 1000px) {
+  .upload-columns { grid-template-columns: 1fr; }
+}
+.field { margin-bottom: 18px; }
+
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  font-family: var(--mono);
+  letter-spacing: 0.01em;
+}
+
+.field .hint {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  margin-top: 5px;
+}
+
+input[type="text"], input[type="password"] {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.7);
+  border: 1.5px solid var(--border);
+  border-radius: 11px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+input[type="text"]:focus, input[type="password"]:focus {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px var(--purple-bg);
+}
+
+input[type="text"]::placeholder, input[type="password"]::placeholder {
+  color: var(--text-faint);
+}
+
+.token-echo {
+  cursor: default;
+  color: transparent;
+  background: rgba(255,255,255,0.4);
+}
+.token-echo:focus { box-shadow: none; border-color: var(--border); }
+
+/* file dropzone */
+.dropzone {
+  border: 2px dashed rgba(91,87,240,0.35);
+  border-radius: 16px;
+  padding: 26px;
+  text-align: center;
+  background: rgba(255,255,255,0.4);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.dropzone.drag {
+  border-color: var(--purple);
+  background: var(--purple-bg);
+}
+
+.dropzone input[type="file"] { display: none; }
+
+.dropzone .dz-label {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.dropzone .dz-label b { color: var(--blue); }
+
+.dropzone .dz-filename {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--green-dim);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+/* buttons */
+button {
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 10px 22px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, opacity 0.12s, transform 0.08s, box-shadow 0.12s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(91,87,240,0.35);
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(91,87,240,0.45); }
+.btn-primary:disabled { background: var(--border); color: var(--text-faint); box-shadow: none; cursor: not-allowed; transform: none; }
+
+.btn-secondary {
+  background: rgba(255,255,255,0.6);
+  border-color: var(--border);
+  color: var(--text);
+}
+.btn-secondary:hover { border-color: var(--blue); color: var(--blue); }
+.btn-secondary:disabled { color: var(--text-faint); cursor: not-allowed; }
+
+.btn-danger {
+  background: var(--red-bg);
+  border-color: transparent;
+  color: var(--red);
+  font-size: 11px;
+  padding: 5px 10px;
+  font-weight: 700;
+}
+.btn-danger:hover { background: var(--red); color: #fff; }
+
+.btn-danger-lg {
+  background: var(--red-bg);
+  border-color: transparent;
+  color: var(--red);
+  font-size: 12px;
+  padding: 8px 14px;
+}
+.btn-danger-lg:hover { background: var(--red); color: #fff; }
+.btn-danger-lg:disabled { background: var(--border); color: var(--text-faint); cursor: not-allowed; }
+
+/* ---------- activity log (diff-style signature) ---------- */
+.log-panel {
+  margin-top: 22px;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.log-header {
+  padding: 9px 14px;
+  background: rgba(255,255,255,0.5);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--purple);
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.log-body {
+  padding: 14px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.9;
+  min-height: 20px;
+  max-height: 340px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.log-line { display: flex; gap: 10px; padding-left: 4px; border-left: 2px solid transparent; }
+.log-line .glyph { flex-shrink: 0; font-weight: 700; width: 10px; }
+.log-line.pending { border-left-color: var(--amber); }
+.log-line.pending .glyph { color: var(--amber); }
+.log-line.ok { border-left-color: var(--green); }
+.log-line.ok .glyph { color: var(--green); }
+.log-line.err { border-left-color: var(--red); }
+.log-line.err .glyph { color: var(--red); }
+.log-line .msg { color: var(--text); }
+.log-line .dim { color: var(--blue); font-weight: 600; }
+
+.log-empty { color: var(--text-faint); font-size: 12px; }
+
+/* preview */
+.preview-wrap {
+  margin-top: 18px;
+  display: none;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 14px;
+}
+.preview-wrap img {
+  max-width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  display: block;
+}
+.preview-item img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  display: block;
+  box-shadow: 0 8px 20px rgba(91,87,240,0.16);
+}
+.preview-item .cap, .preview-wrap .cap {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 6px;
+  word-break: break-all;
+}
+
+.section-title {
+  font-family: var(--display);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 40px 0 16px;
+}
+
+/* ---------- gallery ---------- */
+.gallery-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.gallery-toolbar .field { flex: 1; margin-bottom: 0; min-width: 200px; }
+
+.gallery-status {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+}
+.gallery-status.err { color: var(--red); }
+.gallery-status.ok { color: var(--green-dim); font-weight: 600; }
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 14px;
+}
+
+.gallery-card {
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: border-color 0.12s, box-shadow 0.12s, transform 0.1s;
+}
+.gallery-card:hover { border-color: var(--purple); box-shadow: 0 14px 30px rgba(91,87,240,0.18); transform: translateY(-2px); }
+
+.gallery-card .thumb {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+  background: rgba(255,255,255,0.5);
+}
+
+.gallery-card .meta {
+  padding: 10px;
+}
+
+.gallery-card .fname {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text-dim);
+  word-break: break-all;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.gallery-card .row-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn-view {
+  background: var(--blue-bg);
+  border: 1px solid transparent;
+  color: var(--blue);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+}
+.btn-view:hover { background: var(--blue); color: #fff; }
+
+.btn-edit {
+  background: var(--amber-bg);
+  border: 1px solid transparent;
+  color: #935900;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+}
+.btn-edit:hover { background: var(--amber); color: #fff; }
+.btn-edit:disabled { background: var(--border); color: var(--text-faint); cursor: not-allowed; }
+
+.empty-state {
+  border: 2px dashed var(--border);
+  border-radius: 16px;
+  padding: 44px 20px;
+  text-align: center;
+  color: var(--text-faint);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  background: rgba(255,255,255,0.4);
+}
+
+/* ---------- manifest editor ---------- */
+.manifest-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.manifest-toolbar .field { flex: 1; margin-bottom: 0; min-width: 200px; }
+
+.manifest-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 16px 0 18px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.manifest-actions .left { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+.count-chip {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+.entry-row {
+  display: grid;
+  grid-template-columns: 44px 1fr 140px 140px 90px 70px;
+  gap: 10px;
+  align-items: center;
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.entry-row:hover { border-color: var(--purple); box-shadow: 0 6px 16px rgba(91,87,240,0.12); }
+.entry-row.dirty { border-color: var(--amber); background: var(--amber-bg); }
+
+.entry-row .thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: rgba(255,255,255,0.5);
+  border: 1px solid var(--border-soft);
+  cursor: pointer;
+}
+
+.entry-row .url-cell {
+  min-width: 0;
+  overflow: hidden;
+}
+.entry-row .url-cell .fname {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.entry-row .url-cell .full-url {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.entry-input {
+  width: 100%;
+  padding: 6px 8px;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  outline: none;
+}
+.entry-input:focus { border-color: var(--purple); }
+
+.premium-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.premium-toggle input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--purple); }
+
+.entry-remove {
+  background: var(--red-bg);
+  border: none;
+  color: var(--red);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 0;
+  width: 100%;
+  border-radius: 8px;
+}
+.entry-remove:hover { background: var(--red); color: #fff; }
+
+.entry-header {
+  display: grid;
+  grid-template-columns: 44px 1fr 140px 140px 90px 70px;
+  gap: 10px;
+  padding: 0 10px;
+  margin-bottom: 8px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+
+.raw-toggle-wrap { margin-top: 24px; }
+.raw-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--purple);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0;
+  cursor: pointer;
+}
+.raw-toggle-btn:hover { text-decoration: underline; }
+
+.raw-json {
+  display: none;
+  margin-top: 14px;
+  width: 100%;
+  min-height: 260px;
+  padding: 14px;
+  background: rgba(255,255,255,0.6);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  resize: vertical;
+  outline: none;
+}
+.raw-json:focus { border-color: var(--purple); }
+.raw-json.open { display: block; }
+
+.save-bar {
+  position: sticky;
+  bottom: 16px;
+  margin-top: 20px;
+  padding: 13px 16px;
+  background: var(--glass-strong);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  box-shadow: 0 -8px 28px rgba(26,26,46,0.1);
+}
+.save-bar.show { display: flex; }
+.save-bar .msg { font-family: var(--mono); font-size: 12px; color: var(--amber); }
+
+/* ---------- view/edit mode toggle ---------- */
+.page-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 4px;
+  background: rgba(255,255,255,0.5);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+.mode-btn {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 7px 18px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  border-radius: 999px;
+}
+.mode-btn:hover { color: var(--purple); }
+.mode-btn.active {
+  background: linear-gradient(135deg, var(--purple), #8a7bff);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(91,87,240,0.3);
+}
+
+/* ---------- read-only view grid ---------- */
+.view-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+.view-card {
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: border-color 0.12s, box-shadow 0.12s, transform 0.1s;
+}
+.view-card:hover { border-color: var(--purple); box-shadow: 0 14px 30px rgba(91,87,240,0.18); transform: translateY(-2px); }
+
+.view-card .thumb {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+  background: rgba(255,255,255,0.5);
+}
+
+.view-card-meta { padding: 10px; }
+.view-card-name {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 3px;
+  word-break: break-word;
+}
+.view-card-sub {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 5px;
+}
+.view-card-file {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-faint);
+  word-break: break-all;
+}
+
+.premium-badge {
+  display: inline-block;
+  background: var(--amber-bg);
+  color: #935900;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 20px;
+  margin-left: 4px;
+  vertical-align: 1px;
+}
+
+/* ---------- missing-images warning ---------- */
+.warn-bar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: var(--amber-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 18px;
+  margin-bottom: 20px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  flex-wrap: wrap;
+}
+.warn-bar.show { display: flex; }
+.warn-bar .warn-msg { line-height: 1.5; }
+.warn-bar .warn-msg b { color: #935900; }
+
+/* ---------- full-screen viewer ---------- */
+.viewer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 18, 36, 0.82);
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+.viewer-overlay.open { display: flex; }
+
+.viewer-overlay img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+}
+
+.viewer-close {
+  position: absolute;
+  top: 24px;
+  right: 32px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.viewer-close:hover { background: rgba(255,255,255,0.32); }
+
+.viewer-caption {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: #fff;
+  background: rgba(0,0,0,0.4);
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+
+/* =====================================================
+   MOBILE RESPONSIVE — collapses top navbar into a fixed
+   glass bottom tab bar
+   ===================================================== */
+@media (max-width: 760px) {
+  .sidebar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0; top: auto;
+    width: 100%;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: space-around;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+    border-bottom: none;
+    border-top: 1px solid var(--border-soft);
+    box-shadow: 0 -8px 24px rgba(26,26,46,0.1);
+    z-index: 500;
+  }
+
+  .brand, .sidebar-footer { display: none; }
+
+  .nav-item {
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    margin: 0;
+    padding: 7px 4px;
+    font-size: 10.5px;
+    text-align: center;
+    border-radius: 12px;
+  }
+  .nav-item svg { width: 18px; height: 18px; }
+
+  .main {
+    padding: 20px 18px calc(90px + env(safe-area-inset-bottom, 0px));
+    max-width: none;
+  }
+
+  .page-title { font-size: 23px; }
+  .page-sub { font-size: 13px; }
+
+  .status-bar, .reminder-bar, .warn-bar { font-size: 11.5px; padding: 10px 12px; gap: 10px; }
+
+  .gallery-toolbar, .manifest-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .gallery-toolbar .field, .manifest-toolbar .field { min-width: 0; }
+  .gallery-toolbar button, .manifest-toolbar button { width: 100%; }
+
+  .manifest-actions { flex-direction: column; align-items: stretch; }
+  .manifest-actions .left { justify-content: space-between; }
+  .manifest-actions .btn-danger-lg { width: 100%; }
+
+  .page-header-row { flex-direction: column; align-items: stretch; }
+  .mode-toggle { align-self: stretch; }
+  .mode-btn { flex: 1; }
+
+  .save-bar { flex-direction: column; align-items: stretch; bottom: 0; border-radius: 16px 16px 0 0; }
+  .save-bar > div { display: flex; gap: 10px; }
+  .save-bar > div button { flex: 1; }
+
+  .col-panel { padding: 18px; border-radius: 16px; }
+
+  .entry-row, .entry-header { grid-template-columns: 36px 1fr 64px; gap: 8px; }
+  .entry-header span:nth-child(4), .entry-header span:nth-child(5),
+  .entry-row .cat-cell, .entry-row .premium-toggle { display: none; }
+
+  .gallery-grid, .view-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+
+  .viewer-overlay { padding: 16px; }
+  .viewer-close { top: 14px; right: 14px; width: 36px; height: 36px; }
+}
+
+@media (max-width: 420px) {
+  .main { padding-left: 14px; padding-right: 14px; }
+  .page-title { font-size: 21px; }
+  .status-bar { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .nav-item { font-size: 9.5px; }
+}
+
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="brand">
+    <span class="dot"></span>
+    <span class="brand-text">SG Apps Github Console</span>
+  </div>
+
+  <a class="nav-item" href="upload.html">
+    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a.75.75 0 01.75.75v6.5h6.5a.75.75 0 010 1.5h-6.5v6.5a.75.75 0 01-1.5 0v-6.5h-6.5a.75.75 0 010-1.5h6.5v-6.5A.75.75 0 018 1z"/></svg>
+    Upload
+  </a>
+  <a class="nav-item active" href="gallery.html">
+    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 2A1.5 1.5 0 000 3.5v9A1.5 1.5 0 001.5 14h13a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0014.5 2h-13zM1.5 3.5h13v6.086l-2.72-2.72a.75.75 0 00-1.06 0l-2.97 2.97-1.47-1.47a.75.75 0 00-1.06 0L1.5 11.94V3.5zm0 9v-.19l3.72-3.72 1.47 1.47a.75.75 0 001.06 0l2.97-2.97 3.28 3.28v1.13h-13z"/></svg>
+    Gallery
+  </a>
+
+  <div class="sidebar-footer">
+    <div class="repo-chip">
+      repo &nbsp;<b>sgappstech/sgapps</b><br>
+      branch &nbsp;<b>main</b>
+    </div>
+  </div>
+</nav>
+
+<main class="main">
+  <p class="page-eyebrow">// browse</p>
+  <h1 class="page-title">Uploaded videos</h1>
+  <p class="page-sub">Lists video files in <b>videos/</b>. Deleting removes the file with a new commit on <b>main</b>. Renaming creates the file under the new name and removes the old one.</p>
+
+  <div class="gallery-toolbar">
+    <div class="field">
+      <label for="token">Personal access token</label>
+      <input type="text" id="token" class="token-echo" placeholder="No token found — set it on the Upload page" readonly tabindex="-1">
+    </div>
+    <button class="btn-danger-lg" id="deleteAllBtn" onclick="deleteAllVideos()" style="display: none;">Delete all</button>
+  </div>
+  <p style="font-family: var(--mono); font-size: 11.5px; color: var(--text-faint); margin: -12px 0 20px;">Token is shared with the Upload page in this browser. <a href="#" id="forgetToken" style="color: var(--red);">Forget token</a></p>
+
+  <p class="gallery-status" id="galleryStatus"></p>
+  <div id="galleryContainer"></div>
+</main>
+
+<script>
+const REPO = 'sgappstech/sgapps';
+const BRANCH = 'main';
+const FOLDER = 'sg';
+
+let currentFiles = [];
+let currentHeaders = null;
+
+// ---------- shared token persistence ----------
+const TOKEN_KEY = 'gh_uploader_pat';
+const tokenInput = document.getElementById('token');
+
+function getToken() {
+  try { return (localStorage.getItem(TOKEN_KEY) || '').trim(); } catch (e) { return ''; }
+}
+
+function maskToken(t) {
+  if (!t) return '';
+  if (t.length <= 8) return '•'.repeat(t.length);
+  return t.slice(0, 4) + '•'.repeat(Math.max(4, t.length - 8)) + t.slice(-4);
+}
+
+function refreshTokenEcho() {
+  const t = getToken();
+  tokenInput.placeholder = t ? maskToken(t) : 'No token found — set it on the Upload page';
+}
+
+refreshTokenEcho();
+loadGallery();
+
+document.getElementById('forgetToken').addEventListener('click', e => {
+  e.preventDefault();
+  try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+  refreshTokenEcho();
+  loadGallery();
+});
+
+async function loadGallery() {
+  const token = getToken();
+  const folder = FOLDER;
+  const statusEl = document.getElementById('galleryStatus');
+  const container = document.getElementById('galleryContainer');
+  const deleteAllBtn = document.getElementById('deleteAllBtn');
+
+  container.innerHTML = '';
+  statusEl.className = 'gallery-status';
+  currentFiles = [];
+  currentHeaders = null;
+  deleteAllBtn.style.display = 'none';
+
+  if (!token) {
+    statusEl.className = 'gallery-status err';
+    statusEl.textContent = 'No token found — set it on the Upload page.';
+    return;
+  }
+
+  statusEl.textContent = 'Loading files…';
+
+  try {
+    const headers = {
+      'Authorization': `token ${token}`,
+      'Accept': 'application/vnd.github+json'
+    };
+
+    const listUrl = `https://api.github.com/repos/${REPO}/contents/${encodeURIPath(folder)}?ref=${encodeURIComponent(BRANCH)}`;
+    const resp = await fetch(listUrl, { method: 'GET', headers });
+
+    if (resp.status === 404) {
+      statusEl.textContent = 'Folder not found (no files uploaded yet at this path).';
+      container.innerHTML = '<div class="empty-state">Nothing here yet.</div>';
+      return;
+    }
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      throw new Error(`${resp.status} ${errData.message || ''}`);
+    }
+
+    const items = await resp.json();
+    const videoExt = /\.(mp4|webm|mov|m4v|avi|mkv|ogv)$/i;
+    const videoFiles = (Array.isArray(items) ? items : [])
+      .filter(item => item.type === 'file' && videoExt.test(item.name))
+      .sort(byNameNumber);
+
+    if (videoFiles.length === 0) {
+      statusEl.textContent = 'No video files found in this folder.';
+      container.innerHTML = '<div class="empty-state">Nothing here yet.</div>';
+      return;
+    }
+
+    statusEl.className = 'gallery-status ok';
+    statusEl.textContent = `${videoFiles.length} video(s) found.`;
+    currentFiles = videoFiles;
+    currentHeaders = headers;
+    deleteAllBtn.style.display = 'inline-block';
+
+    const grid = document.createElement('div');
+    grid.className = 'gallery-grid';
+
+    videoFiles.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'gallery-card';
+      card.dataset.fname = item.name;
+
+      const video = document.createElement('video');
+      video.className = 'thumb';
+      video.src = item.download_url;
+      video.muted = true;
+      video.preload = 'metadata';
+      video.title = 'Click to view full size';
+      video.onclick = () => openViewer(item.download_url, item.name);
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+
+      const fname = document.createElement('div');
+      fname.className = 'fname';
+      fname.textContent = item.name;
+
+      const actions = document.createElement('div');
+      actions.className = 'row-actions';
+
+      const viewBtnEl = document.createElement('button');
+      viewBtnEl.className = 'btn-view';
+      viewBtnEl.textContent = 'View';
+      viewBtnEl.onclick = () => openViewer(item.download_url, item.name);
+
+      const editBtnEl = document.createElement('button');
+      editBtnEl.className = 'btn-edit';
+      editBtnEl.textContent = 'Edit';
+      editBtnEl.onclick = () => promptRename(item, headers, card, editBtnEl);
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-danger';
+      delBtn.textContent = 'Delete';
+      delBtn.onclick = () => deleteFile(item, headers, card);
+
+      actions.appendChild(viewBtnEl);
+      actions.appendChild(editBtnEl);
+      actions.appendChild(delBtn);
+      meta.appendChild(fname);
+      meta.appendChild(actions);
+      card.appendChild(video);
+      card.appendChild(meta);
+      grid.appendChild(card);
+    });
+
+    container.appendChild(grid);
+
+  } catch (err) {
+    statusEl.className = 'gallery-status err';
+    statusEl.textContent = 'Error: ' + err.message;
+    console.error(err);
+  }
+}
+
+async function promptRename(item, headers, cardEl, editBtnEl) {
+  const dotIndex = item.name.lastIndexOf('.');
+  const ext = dotIndex !== -1 ? item.name.slice(dotIndex) : '';
+  const newName = prompt('Rename video to:', item.name);
+  if (newName === null) return; // cancelled
+
+  const trimmed = newName.trim();
+  if (!trimmed || trimmed === item.name) return;
+  if (trimmed.includes('/') || trimmed.includes('\\')) {
+    alert('Filename cannot contain slashes.');
+    return;
+  }
+  if (ext && !trimmed.toLowerCase().endsWith(ext.toLowerCase())) {
+    if (!confirm(`The new name doesn't end in "${ext}". Continue anyway?`)) return;
+  }
+  if (currentFiles.some(f => f.name.toLowerCase() === trimmed.toLowerCase())) {
+    alert(`"${trimmed}" already exists in videos/. Choose a different name.`);
+    return;
+  }
+
+  editBtnEl.disabled = true;
+  cardEl.style.opacity = '0.5';
+
+  try {
+    const putData = await renameFile(item, headers, FOLDER, trimmed);
+
+    // update local state so further actions (delete, another rename) target the new file
+    const newItem = {
+      ...item,
+      name: trimmed,
+      path: `${FOLDER}/${trimmed}`,
+      sha: putData.content.sha,
+      url: putData.content.url,
+      download_url: putData.content.download_url
+    };
+    const idx = currentFiles.findIndex(f => f.name === item.name);
+    if (idx !== -1) currentFiles[idx] = newItem;
+
+    cardEl.dataset.fname = trimmed;
+    cardEl.querySelector('.fname').textContent = trimmed;
+    const video = cardEl.querySelector('video.thumb');
+    video.src = newItem.download_url + `?t=${Date.now()}`;
+
+    const viewBtnEl = cardEl.querySelector('.btn-view');
+    viewBtnEl.onclick = () => openViewer(newItem.download_url, newItem.name);
+    editBtnEl.onclick = () => promptRename(newItem, headers, cardEl, editBtnEl);
+    const delBtnEl = cardEl.querySelector('.btn-danger');
+    delBtnEl.onclick = () => deleteFile(newItem, headers, cardEl);
+
+  } catch (err) {
+    alert('Error renaming video: ' + err.message);
+    console.error(err);
+  } finally {
+    editBtnEl.disabled = false;
+    cardEl.style.opacity = '1';
+  }
+}
+
+// fetches the raw bytes of an existing file, pushes them to a new path, then
+// deletes the old path — this is how a "rename" is done via the Contents API
+async function renameFile(item, headers, folder, newName) {
+  const fileResp = await fetch(item.download_url);
+  if (!fileResp.ok) throw new Error('Could not read the original file content.');
+  const buffer = await fileResp.arrayBuffer();
+  const base64Content = arrayBufferToBase64(buffer);
+
+  const newPath = `${folder}/${newName}`;
+  const apiUrl = `https://api.github.com/repos/${REPO}/contents/${encodeURIPath(newPath)}`;
+  const jsonHeaders = { ...headers, 'Content-Type': 'application/json' };
+
+  const putResp = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: jsonHeaders,
+    body: JSON.stringify({
+      message: `Rename ${item.name} to ${newName}`,
+      content: base64Content,
+      branch: BRANCH
+    })
+  });
+  const putData = await putResp.json();
+  if (!putResp.ok) {
+    throw new Error(`${putResp.status} ${putData.message || 'Creating renamed file failed'}`);
+  }
+
+  const delResp = await fetch(item.url, {
+    method: 'DELETE',
+    headers: jsonHeaders,
+    body: JSON.stringify({
+      message: `Remove ${item.name} after rename to ${newName}`,
+      sha: item.sha,
+      branch: BRANCH
+    })
+  });
+  if (!delResp.ok) {
+    const errData = await delResp.json().catch(() => ({}));
+    throw new Error(`Renamed to "${newName}", but removing the old file "${item.name}" failed: ${delResp.status} ${errData.message || ''}. Please delete it manually.`);
+  }
+
+  return putData;
+}
+
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+async function deleteFile(item, headers, cardEl) {
+  if (!confirm(`Delete "${item.name}" from main? This creates a commit removing the file.`)) return;
+
+  cardEl.style.opacity = '0.5';
+  try {
+    const resp = await fetch(item.url, {
+      method: 'DELETE',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: `Delete ${item.name}`,
+        sha: item.sha,
+        branch: BRANCH
+      })
+    });
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      throw new Error(`${resp.status} ${errData.message || 'Delete failed'}`);
+    }
+
+    cardEl.remove();
+    currentFiles = currentFiles.filter(f => f.name !== item.name);
+    if (currentFiles.length === 0) {
+      document.getElementById('deleteAllBtn').style.display = 'none';
+      document.getElementById('galleryContainer').innerHTML = '<div class="empty-state">Nothing here yet.</div>';
+    }
+  } catch (err) {
+    cardEl.style.opacity = '1';
+    alert('Error deleting file: ' + err.message);
+    console.error(err);
+  }
+}
+
+async function deleteAllVideos() {
+  if (currentFiles.length === 0 || !currentHeaders) return;
+
+  const total = currentFiles.length;
+  if (!confirm(`Delete all ${total} video(s) from main? This removes each file and cannot be undone.`)) return;
+
+  const deleteAllBtn = document.getElementById('deleteAllBtn');
+  const statusEl = document.getElementById('galleryStatus');
+
+  deleteAllBtn.disabled = true;
+
+  const files = [...currentFiles];
+  let successCount = 0;
+  let failCount = 0;
+
+  for (const item of files) {
+    statusEl.className = 'gallery-status';
+    statusEl.textContent = `Deleting ${successCount + failCount + 1} of ${total}: ${item.name}…`;
+
+    const row = document.querySelector(`.gallery-card[data-fname="${CSS.escape(item.name)}"]`);
+    if (row) row.style.opacity = '0.5';
+
+    try {
+      const resp = await fetch(item.url, {
+        method: 'DELETE',
+        headers: { ...currentHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `Delete ${item.name}`,
+          sha: item.sha,
+          branch: BRANCH
+        })
+      });
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(`${resp.status} ${errData.message || 'Delete failed'}`);
+      }
+      if (row) row.remove();
+      currentFiles = currentFiles.filter(f => f.name !== item.name);
+      successCount++;
+    } catch (err) {
+      if (row) row.style.opacity = '1';
+      failCount++;
+      console.error(err);
+    }
+  }
+
+  statusEl.className = failCount ? 'gallery-status err' : 'gallery-status ok';
+  statusEl.textContent = `Deleted ${successCount} of ${total} video(s)${failCount ? `, ${failCount} failed` : ''}.`;
+
+  if (currentFiles.length === 0) {
+    document.getElementById('galleryContainer').innerHTML = '<div class="empty-state">Nothing here yet.</div>';
+    deleteAllBtn.style.display = 'none';
+  }
+
+  deleteAllBtn.disabled = false;
+}
+
+function encodeURIPath(path) {
+  if (!path) return '';
+  return path.split('/').map(encodeURIComponent).join('/');
+}
+
+// sorts filenames like vijay1, vijay2, vijay10 in numeric order instead of
+// alphabetic order (which would put vijay10 before vijay2)
+function byNameNumber(a, b) {
+  const numA = extractNumber(a.name);
+  const numB = extractNumber(b.name);
+  if (numA !== null && numB !== null && numA !== numB) return numA - numB;
+  return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+}
+
+function extractNumber(name) {
+  const match = name.match(/(\d+)(?=\.[^.]+$)/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+function openViewer(url, name) {
+  const video = document.getElementById('viewerVideo');
+  video.src = url;
+  document.getElementById('viewerCaption').textContent = name;
+  document.getElementById('viewerOverlay').classList.add('open');
+}
+
+function closeViewer() {
+  document.getElementById('viewerOverlay').classList.remove('open');
+  const video = document.getElementById('viewerVideo');
+  video.pause();
+  video.src = '';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeViewer();
+});
+</script>
+
+<div class="viewer-overlay" id="viewerOverlay" onclick="if(event.target===this) closeViewer()">
+  <button class="viewer-close" onclick="closeViewer()">✕</button>
+  <video id="viewerVideo" src="" controls autoplay style="max-width:100%; max-height:100%; border-radius:14px; box-shadow:0 24px 60px rgba(0,0,0,0.4);"></video>
+  <div class="viewer-caption" id="viewerCaption"></div>
+</div>
+
+</body>
+</html>
